@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Calc — Precision Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0a0f;
+    --fg: #f5f5f7;
+    --muted: #8a8a98;
+    --accent: #ffb547;
+    --accent-glow: rgba(255, 181, 71, 0.4);
+    --accent-2: #ff6b4a;
+    --danger: #ff4d6d;
+    --border: rgba(255, 255, 255, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-base);
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* Atmospheric background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 15% 20%, rgba(255, 181, 71, 0.18), transparent 60%),
+      radial-gradient(ellipse 500px 500px at 85% 85%, rgba(255, 107, 74, 0.14), transparent 60%),
+      radial-gradient(ellipse 400px 300px at 50% 50%, rgba(120, 80, 200, 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-30px, 20px) scale(1.05); }
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    max-width: 860px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+
+  .brand-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 14px var(--accent-glow);
+    animation: pulse 2.2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .brand-name {
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase;
+  }
+
+  .brand-sub {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.12em; margin-top: 2px;
+  }
+
+  .key-hint {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .key-hint kbd {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--fg);
+    margin: 0 1px;
+  }
+
+  /* Calculator main body */
+  .calculator {
+    background: linear-gradient(155deg, rgba(32, 32, 42, 0.85), rgba(14, 14, 20, 0.95));
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 26px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Display screen */
+  .display {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.25)),
+      radial-gradient(ellipse at top, rgba(255, 181, 71, 0.04), transparent 60%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 24px 20px;
+    margin-bottom: 20px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .display::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 181, 71, 0.6), transparent);
+  }
+
+  .display::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px);
+    pointer-events: none;
+  }
+
+  .expression {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    font-size: 16px;
+    text-align: right;
+    min-height: 22px;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 6px;
+    direction: rtl;
+    letter-spacing: 0.02em;
+  }
+
+  .expression::-webkit-scrollbar { display: none; }
+
+  .result {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 300;
+    font-size: 54px;
+    text-align: right;
+    line-height: 1.1;
+    color: var(--fg);
+    overflow-x: auto;
+    white-space: nowrap;
+    direction: rtl;
+    transition: color 0.25s ease;
+    letter-spacing: -0.02em;
+  }
+
+  .result.error { color: var(--danger); font-size: 32px; }
+  .result::-webkit-scrollbar { display: none; }
+
+  .result.flash { animation: flash 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @keyframes flash {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.06); color: var(--accent); text-shadow: 0 0 24px var(--accent-glow); }
+    100% { transform: scale(1); }
+  }
+
+  /* Button grid */
+  .keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 11px;
+  }
+
+  .key {
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--fg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    padding: 18px 0;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .key:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .key:active { transform: translateY(0) scale(0.95); }
+
+  .key.pressed { animation: keyPress 0.4s ease; }
+
+  @keyframes keyPress {
+    0% { box-shadow: 0 0 0 0 rgba(255, 181, 71, 0.4); }
+    100% { box-shadow: 0 0 0 14px rgba(255, 181, 71, 0); }
+  }
+
+  .key.op {
+    color: var(--accent);
+    background: rgba(255, 181, 71, 0.09);
+    border-color: rgba(255, 181, 71, 0.22);
+    font-size: 24px;
+  }
+
+  .key.op:hover {
+    background: rgba(255, 181, 71, 0.16);
+    box-shadow: 0 6px 20px rgba(255, 181, 71, 0.18);
+  }
+
+  .key.op.active {
+    background: var(--accent);
+    color: #1a1a1a;
+    box-shadow: 0 0 30px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    border-color: transparent;
+  }
+
+  .key.fn {
+    color: var(--accent-2);
+    background: rgba(255, 107, 74, 0.08);
+    border-color: rgba(255, 107, 74, 0.2);
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .key.fn:hover {
+    background: rgba(255, 107, 74, 0.16);
+    box-shadow: 0 6px 18px rgba(255, 107, 74, 0.15);
+  }
+
+  .key.equals {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1a1208;
+    font-weight: 700;
+    border-color: transparent;
+    box-shadow: 0 6px 22px rgba(255, 181, 71, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+    font-size: 26px;
+  }
+
+  .key.equals:hover {
+    box-shadow: 0 10px 34px rgba(255, 181, 71, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+  }
+
+  .key.zero { grid-column: span 2; }
+
+  /* History panel */
+  .history {
+    background: linear-gradient(155deg, rgba(32, 32, 42, 0.85), rgba(14, 14, 20, 0.95));
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    max-height: 520px;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-title {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .history-clear {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: inherit;
+  }
+
+  .history-clear:hover {
+    color: var(--danger);
+    border-color: rgba(255, 77, 109, 0.5);
+    background: rgba(255, 77, 109, 0.08);
+  }
+
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-right: 4px;
+  }
+
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .history-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+  .history-item {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 11px 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: slideIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(18px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .history-item:hover {
+    background: rgba(255, 181, 71, 0.06);
+    border-color: rgba(255, 181, 71, 0.3);
+    transform: translateX(-2px);
+  }
+
+  .history-expr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 3px;
+    overflow-x: auto;
+    white-space: nowrap;
+    direction: rtl;
+  }
+
+  .history-expr::-webkit-scrollbar { display: none; }
+
+  .history-result {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  .history-empty {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 30px 16px;
+    line-height: 1.8;
+  }
+
+  .history-empty kbd {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--fg);
+  }
+
+  /* Responsive */
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; max-width: 400px; gap: 16px; }
+    .history { max-height: 180px; min-height: 120px; }
+    .result { font-size: 42px; }
+    .key { font-size: 20px; padding: 16px 0; }
+    .key-hint { display: none; }
+    .calculator { padding: 22px; }
+  }
+
+  @media (max-width: 380px) {
+    body { padding: 12px; }
+    .result { font-size: 36px; }
+    .key { font-size: 18px; padding: 14px 0; gap: 8px; }
+    .keys { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div>
+          <div class="brand-name">Nexus Calc</div>
+          <div class="brand-sub">v1.0 · keyboard ready</div>
+        </div>
+      </div>
+      <div class="key-hint">
+        <kbd>0-9</kbd> <kbd>+−×÷</kbd> <kbd>Enter</kbd> <kbd>Esc</kbd> <kbd>⌫</kbd>
+      </div>
+    </header>
+
+    <main class="calculator" aria-label="Calculator">
+      <div class="display" aria-live="polite">
+        <div class="expression" id="expression">&nbsp;</div>
+        <div class="result" id="result">0</div>
+      </div>
+      <div class="keys" id="keys" role="group" aria-label="Calculator keys">
+        <button class="key fn" data-action="clear" aria-label="Clear all">AC</button>
+        <button class="key fn" data-action="delete" aria-label="Delete last digit">⌫</button>
+        <button class="key fn" data-action="percent" aria-label="Percent">%</button>
+        <button class="key op" data-op="÷" aria-label="Divide by">÷</button>
+
+        <button class="key" data-num="7">7</button>
+        <button class="key" data-num="8">8</button>
+        <button class="key" data-num="9">9</button>
+        <button class="key op" data-op="×" aria-label="Multiply by">×</button>
+
+        <button class="key" data-num="4">4</button>
+        <button class="key" data-num="5">5</button>
+        <button class="key" data-num="6">6</button>
+        <button class="key op" data-op="−" aria-label="Subtract">−</button>
+
+        <button class="key" data-num="1">1</button>
+        <button class="key" data-num="2">2</button>
+        <button class="key" data-num="3">3</button>
+        <button class="key op" data-op="+" aria-label="Add">+</button>
+
+        <button class="key zero" data-num="0">0</button>
+        <button class="key" data-num=".">.</button>
+        <button class="key equals" data-action="equals" aria-label="Calculate result">=</button>
+      </div>
+    </main>
+
+    <aside class="history" aria-label="Calculation history">
+      <div class="history-header">
+        <div class="history-title">History</div>
+        <button class="history-clear" id="clearHistory">Clear</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">No calculation history yet<br>Press <kbd>=</kbd> or <kbd>Enter</kbd> to start</div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+  // ============ State Management ============
+  const expressionEl = document.getElementById('expression');
+  const resultEl = document.getElementById('result');
+  const historyListEl = document.getElementById('historyList');
+  const keysEl = document.getElementById('keys');
+
+  let currentInput = '0';   // Current input number
+  let expression = '';      // Confirmed expression (excluding current input)
+  let justEvaluated = false; // Whether calculation was just completed
+  let history = [];
+
+  // ============ Number Formatting (Thousands Separator) ============
+  function formatNumber(num) {
+    if (num === '' || num === undefined || num === null) return '0';
+    const str = String(num);
+    // Return directly for complex expressions containing operators
+    if (/[+\-×÷]/.test(str) && str.length > 1 && !str.startsWith('-')) return str;
+    const [intPart, decPart] = str.split('.');
+    let sign = '';
+    let absInt = intPart;
+    if (intPart.startsWith('-')) {
+      sign = '-';
+      absInt = intPart.slice(1);
+    }
+    let formatted = sign + absInt.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (decPart !== undefined) formatted += '.' + decPart;
+    return formatted;
+  }
+
+  // ============ Update Display ============
+  function updateDisplay() {
+    expressionEl.textContent = expression ? expression : '\u00A0';
+    resultEl.textContent = formatNumber(currentInput);
+    resultEl.classList.remove('error');
+  }
+
+  // ============ Input Number / Decimal Point ============
+  function inputNumber(num) {
+    if (justEvaluated) {
+      currentInput = '0';
+      expression = '';
+      justEvaluated = false;
+    }
+    if (num === '.') {
+      if (currentInput === '' || currentInput === '0') {
+        currentInput = '0.';
+      } else if (!currentInput.includes('.')) {
+        currentInput += '.';
+      }
+    } else {
+      if (currentInput === '0') {
+        currentInput = num;
+      } else if (currentInput === '-0') {
+        currentInput = '-' + num;
+      } else {
+        // Limit length to prevent overflow
+        if (currentInput.replace('-', '').replace('.', '').length >= 14) return;
+        currentInput += num;
+      }
+    }
+    updateDisplay();
+  }
+
+  // ============ Input Operator ============
+  function inputOperator(op) {
+    if (justEvaluated) {
+      // Continue calculation after evaluation, use result as starting point
+      expression = currentInput;
+      justEvaluated = false;
+    } else if (currentInput !== '') {
+      expression += currentInput;
+    }
+    // Remove existing operator at the end (replace with new operator)
+    if (expression && /[+\-×÷]$/.test(expression)) {
+      expression = expression.slice(0, -1);
+    }
+    if (expression === '' && op === '−') {
+      // Allow starting with a negative sign
+      currentInput = '-';
+      updateDisplay();
+      return;
+    }
+    expression += op;
+    currentInput = '';
+    updateDisplay();
+    highlightOperator(op);
+  }
+
+  function highlightOperator(op) {
+    document.querySelectorAll('.key.op').forEach(k => k.classList.remove('active'));
+    if (op) {
+      const btn = document.querySelector(`.key.op[data-op="${op}"]`);
+      if (btn) btn.classList.add('active');
+    }
+  }
+
+  // ============ Calculate Result ============
+  function evaluate() {
+    if (justEvaluated) return;
+
+    let fullExpr;
+    if (currentInput !== '' && currentInput !== '-') {
+      fullExpr = expression + currentInput;
+    } else if (expression && /[+\-×÷]$/.test(expression)) {
+      fullExpr = expression.slice(0, -1);
+    } else {
+      fullExpr = expression;
+    }
+
+    if (!fullExpr || /^[+\-]$/.test(fullExpr)) return;
+
+    // Convert to executable expression
+    const jsExpr = fullExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+
+    // Security check: only allow numbers and operators
+    if (!/^[0-9+\-*/.\s]+$/.test(jsExpr)) {
+      showError('Invalid expression');
+      return;
+    }
+
+    try {
+      const result = Function('"use strict"; return (' + jsExpr + ')')();
+      if (!isFinite(result)) {
+        showError('Cannot divide by zero');
+        return;
+      }
+
+      // Format result: keep valid precision, remove trailing zeros
+      let resultStr;
+      if (Number.isInteger(result)) {
+        resultStr = String(result);
+      } else {
+        resultStr = String(parseFloat(result.toFixed(10)));
+      }
+
+      addToHistory(fullExpr, resultStr);
+
+      expression = '';
+      currentInput = resultStr;
+      justEvaluated = true;
+      highlightOperator(null);
+
+      resultEl.classList.remove('error');
+      resultEl.classList.remove('flash');
+      void resultEl.offsetWidth; // Reset animation
+      resultEl.classList.add('flash');
+
+      expressionEl.textContent = fullExpr + ' =';
+      resultEl.textContent = formatNumber(resultStr);
+    } catch (e) {
+      showError('Error');
+    }
+  }
+
+  function showError(msg) {
+    resultEl.classList.add('error');
+    resultEl.textContent = msg;
+    expressionEl.innerHTML = '&nbsp;';
+    expression = '';
+    currentInput = '0';
+    justEvaluated = false;
+    highlightOperator(null);
+  }
+
+  // ============ Clear All ============
+  function clearAll() {
+    currentInput = '0';
+    expression = '';
+    justEvaluated = false;
+    highlightOperator(null);
+    resultEl.classList.remove('error');
+    updateDisplay();
+  }
+
+  // ============ Delete Last Digit ============
+  function deleteLast() {
+    if (justEvaluated) {
+      clearAll();
+      return;
+    }
+    if (currentInput.length > 0 && currentInput !== '0') {
+      currentInput = currentInput.slice(0, -1);
+      if (currentInput === '' || currentInput === '-') currentInput = '0';
+    } else if (expression.length > 0) {
+      // Delete operator at the end of expression
+      expression = expression.slice(0, -1);
+      highlightOperator(null);
+    }
+    updateDisplay();
+  }
+
+  // ============ Percent ============
+  function percent() {
+    if (currentInput !== '' && currentInput !== '0' && currentInput !== '-') {
+      const val = parseFloat(currentInput) / 100;
+      currentInput = String(val);
+      justEvaluated = false;
+      updateDisplay();
+    }
+  }
+
+  // ============ History ============
+  function addToHistory(expr, result) {
+    history.unshift({ expr, result });
+    if (history.length > 50) history = history.slice(0, 50);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyListEl.innerHTML = '<div class="history-empty">No calculation history yet<br>Press <kbd>=</kbd> or <kbd>Enter</kbd> to start</div>';
+      return;
+    }
+    historyListEl.innerHTML = history.map(item => `
+      <div class="history-item" data-result="${item.result}" tabindex="0">
+        <div class="history-expr">${item.expr} =</div>
+        <div class="history-result">${formatNumber(item.result)}</div>
+      </div>
+    `).join('');
+
+    historyListEl.querySelectorAll('.history-item').forEach(item => {
+      const reuse = () => {
+        currentInput = item.dataset.result;
+        expression = '';
+        justEvaluated = true;
+        highlightOperator(null);
+        resultEl.classList.remove('error');
+        updateDisplay();
+      };
+      item.addEventListener('click', reuse);
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reuse(); }
+      });
+    });
+  }
+
+  // ============ Button Clicks ============
+  keysEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.key');
+    if (!btn) return;
+
+    btn.classList.remove('pressed');
+    void btn.offsetWidth;
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 400);
+
+    if (btn.dataset.num !== undefined) {
+      inputNumber(btn.dataset.num);
+      highlightOperator(null);
+    } else if (btn.dataset.op !== undefined) {
+      inputOperator(btn.dataset.op);
+    } else if (btn.dataset.action) {
+      switch (btn.dataset.action) {
+        case 'clear': clearAll(); break;
+        case 'delete': deleteLast(); break;
+        case 'percent': percent(); break;
+        case 'equals': evaluate(); break;
+      }
+    }
+  });
+
+  // ============ Clear History ============
+  document.getElementById('clearHistory').addEventListener('click', () => {
+    history = [];
+    renderHistory();
+  });
+
+  // ============ Keyboard Support ============
+  document.addEventListener('keydown', (e) => {
+    const key = e.key;
+    let btn = null;
+
+    if (/^[0-9]$/.test(key)) {
+      inputNumber(key);
+      btn = document.querySelector(`.key[data-num="${key}"]`);
+      highlightOperator(null);
+    } else if (key === '.') {
+      inputNumber('.');
+      btn = document.querySelector(`.key[data-num="."]`);
+      highlightOperator(null);
+    } else if (key === '+') {
+      inputOperator('+');
+      btn = document.querySelector(`.key.op[data-op="+"]`);
+    } else if (key === '-') {
+      inputOperator('−');
+      btn = document.querySelector(`.key.op[data-op="−"]`);
+    } else if (key === '*' || key === 'x' || key === 'X') {
+      inputOperator('×');
+      btn = document.querySelector(`.key.op[data-op="×"]`);
+    } else if (key === '/') {
+      e.preventDefault();
+      inputOperator('÷');
+      btn = document.querySelector(`.key.op[data-op="÷"]`);
+    } else if (key === 'Enter' || key === '=') {
+      e.preventDefault();
+      evaluate();
+      btn = document.querySelector(`.key.equals`);
+    } else if (key === 'Backspace') {
+      deleteLast();
+      btn = document.querySelector(`.key[data-action="delete"]`);
+    } else if (key === 'Escape') {
+      clearAll();
+      btn = document.querySelector(`.key[data-action="clear"]`);
+    } else if (key === '%') {
+      percent();
+      btn = document.querySelector(`.key[data-action="percent"]`);
+    }
+
+    if (btn) {
+      btn.classList.remove('pressed');
+      void btn.offsetWidth;
+      btn.classList.add('pressed');
+      setTimeout(() => btn.classList.remove('pressed'), 400);
+    }
+  });
+
+  // ============ Initialization ============
+  updateDisplay();
+</script>
+</body>
+</html>
