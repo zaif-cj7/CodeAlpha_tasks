@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aperture — Curated Visual Archive</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0d0c0a;
+    --bg-soft: #181612;
+    --fg: #f5ede0;
+    --fg-dim: #c9bfae;
+    --muted: #8a8175;
+    --accent: #e8743a;
+    --accent-soft: #f5a572;
+    --accent-glow: rgba(232, 116, 58, 0.35);
+    --border: rgba(245, 237, 224, 0.08);
+    --border-strong: rgba(245, 237, 224, 0.16);
+    --card: #1a1815;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+
+  /* Background atmosphere */
+  .atmosphere {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+  }
+  .bg-orb-1 {
+    width: 700px; height: 700px;
+    background: var(--accent);
+    top: -300px; right: -200px;
+    opacity: 0.18;
+    animation: drift1 28s ease-in-out infinite;
+  }
+  .bg-orb-2 {
+    width: 500px; height: 500px;
+    background: #6b4a8e;
+    bottom: -200px; left: -100px;
+    opacity: 0.15;
+    animation: drift2 32s ease-in-out infinite;
+  }
+  .bg-orb-3 {
+    width: 400px; height: 400px;
+    background: #2d6b5a;
+    top: 40%; left: 55%;
+    opacity: 0.1;
+    animation: drift3 35s ease-in-out infinite;
+  }
+
+  @keyframes drift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-120px, 80px) scale(1.15); }
+  }
+  @keyframes drift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(80px, -60px) scale(0.9); }
+  }
+  @keyframes drift3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-100px, -80px) scale(1.2); }
+  }
+
+  .grain {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 2;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .content { position: relative; z-index: 3; }
+
+  /* Header */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(13, 12, 10, 0.7);
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .logo-mark::before {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+  .logo-mark:hover { transform: rotate(180deg); }
+  .logo-mark:hover::before { transform: scale(1.4); }
+
+  /* Hero */
+  .hero-title {
+    font-size: clamp(3.5rem, 11vw, 10rem);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    font-weight: 900;
+    font-variation-settings: "opsz" 144;
+  }
+  .hero-title .accent-word {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+    position: relative;
+  }
+  .hero-title .accent-word::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 0.1em;
+    width: 100%; height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: drawLine 1.6s 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes drawLine {
+    to { transform: scaleX(1); }
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-btn {
+    position: relative;
+    padding: 0.55rem 1.2rem;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+    border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+  }
+  .filter-btn:hover {
+    color: var(--fg);
+    border-color: var(--accent-soft);
+    transform: translateY(-1px);
+  }
+  .filter-btn.active {
+    color: var(--bg);
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 4px 24px var(--accent-glow);
+  }
+  .filter-btn .count {
+    margin-left: 0.5rem;
+    opacity: 0.6;
+    font-size: 0.7rem;
+  }
+  .filter-btn.active .count { opacity: 0.8; }
+
+  /* Gallery */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 240px;
+    gap: 14px;
+  }
+  @media (max-width: 1024px) {
+    .gallery { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 200px; }
+  }
+  @media (max-width: 768px) {
+    .gallery { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 180px; }
+  }
+  @media (max-width: 480px) {
+    .gallery { grid-template-columns: 1fr; grid-auto-rows: 240px; }
+  }
+
+  .gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    cursor: pointer;
+    background: var(--card);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    animation: itemEnter 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  @keyframes itemEnter {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .gallery-item.large { grid-column: span 2; grid-row: span 2; }
+  .gallery-item.tall { grid-row: span 2; }
+  .gallery-item.wide { grid-column: span 2; }
+
+  @media (max-width: 768px) {
+    .gallery-item.large { grid-column: span 2; grid-row: span 2; }
+    .gallery-item.tall { grid-row: span 1; }
+    .gallery-item.wide { grid-column: span 2; }
+  }
+  @media (max-width: 480px) {
+    .gallery-item.large, .gallery-item.tall, .gallery-item.wide {
+      grid-column: span 1; grid-row: span 1;
+    }
+  }
+
+  .gallery-item.hidden { display: none; }
+  .gallery-item.fade-out { opacity: 0; transform: scale(0.95); }
+
+  .gallery-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
+    filter: brightness(0.88) saturate(0.95);
+  }
+  .gallery-item:hover img {
+    transform: scale(1.08);
+    filter: brightness(1) saturate(1.1);
+  }
+
+  .gallery-item::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(13, 12, 10, 0.9) 0%, rgba(13, 12, 10, 0) 55%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .gallery-item:hover::before { opacity: 1; }
+
+  .gallery-overlay {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 1.5rem;
+    z-index: 2;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .gallery-item:hover .gallery-overlay {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .gallery-tag {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    margin-bottom: 0.6rem;
+  }
+
+  .gallery-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .gallery-item.large .gallery-title { font-size: 2rem; }
+
+  .gallery-meta {
+    color: var(--fg-dim);
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+    opacity: 0.85;
+  }
+
+  .gallery-number {
+    position: absolute;
+    top: 1rem; left: 1rem;
+    z-index: 2;
+    font-family: 'Fraunces', serif;
+    font-size: 0.85rem;
+    color: var(--fg);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: rgba(13, 12, 10, 0.6);
+    backdrop-filter: blur(8px);
+    padding: 0.3rem 0.7rem;
+    border-radius: 100px;
+    border: 1px solid var(--border-strong);
+  }
+  .gallery-item:hover .gallery-number { opacity: 1; }
+
+  .gallery-expand {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    z-index: 2;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(13, 12, 10, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--fg);
+    font-size: 0.75rem;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .gallery-item:hover .gallery-expand {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Shimmer loading */
+  .shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--card) 0%, #2a2620 50%, var(--card) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    z-index: 0;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed; inset: 0;
+    z-index: 100;
+    background: rgba(8, 7, 6, 0.96);
+    backdrop-filter: blur(20px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .lightbox.active { opacity: 1; pointer-events: auto; }
+
+  .lightbox-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+  }
+
+  .lightbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    z-index: 10;
+  }
+
+  .lightbox-counter {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    color: var(--fg-dim);
+    letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .lightbox-counter .current {
+    color: var(--accent);
+    font-size: 1.6rem;
+    font-weight: 600;
+  }
+
+  .lightbox-close {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lightbox-close:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    transform: rotate(90deg);
+  }
+
+  .lightbox-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 5rem;
+    overflow: hidden;
+  }
+
+  .lightbox-image-wrap {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox-image {
+    max-width: 100%;
+    max-height: 68vh;
+    object-fit: contain;
+    border-radius: 2px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+  .lightbox-image.changing {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: rgba(13, 12, 10, 0.5);
+    backdrop-filter: blur(10px);
+    color: var(--fg);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 5;
+    font-size: 1.05rem;
+  }
+  .lightbox-nav:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .lightbox-prev { left: 2rem; }
+  .lightbox-next { right: 2rem; }
+
+  .lightbox-footer {
+    padding: 1.5rem 2rem 2rem;
+    text-align: center;
+    z-index: 10;
+  }
+
+  .lightbox-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  .lightbox-meta {
+    color: var(--fg-dim);
+    font-size: 0.85rem;
+    margin-top: 0.6rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .lightbox-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .lightbox-meta i {
+    color: var(--accent);
+    font-size: 0.75rem;
+  }
+
+  .lightbox-hint {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    display: flex; gap: 1rem;
+  }
+  .lightbox-hint kbd {
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--fg-dim);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: var(--card);
+    border: 1px solid var(--accent);
+    color: var(--fg);
+    padding: 0.8rem 1.5rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    z-index: 200;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--accent-glow);
+    display: flex; align-items: center; gap: 0.6rem;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast i { color: var(--accent); }
+
+  /* Stats */
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--card); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .lightbox-stage { padding: 0 1rem; }
+    .lightbox-nav { width: 44px; height: 44px; }
+    .lightbox-prev { left: 0.5rem; }
+    .lightbox-next { right: 0.5rem; }
+    .lightbox-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="atmosphere">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+  <div class="grain"></div>
+
+  <div class="content">
+    <!-- Header -->
+    <header class="site-header">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="logo-mark"></div>
+          <div>
+            <div class="font-display text-xl font-semibold tracking-tight">Aperture</div>
+            <div class="text-[0.65rem] text-[var(--muted)] uppercase tracking-[0.2em]">Visual Archive</div>
+          </div>
+        </div>
+        <nav class="hidden md:flex items-center gap-8 text-sm">
+          <a href="#" class="text-[var(--fg)] hover:text-[var(--accent)] transition">Gallery</a>
+          <a href="#" class="text-[var(--muted)] hover:text-[var(--accent)] transition">Collections</a>
+          <a href="#" class="text-[var(--muted)] hover:text-[var(--accent)] transition">Journal</a>
+          <a href="#" class="text-[var(--muted)] hover:text-[var(--accent)] transition">About</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button class="text-[var(--muted)] hover:text-[var(--fg)] transition w-9 h-9 flex items-center justify-center" aria-label="Search">
+            <i class="fas fa-search"></i>
+          </button>
+          <button class="hidden sm:block px-4 py-2 border border-[var(--border-strong)] rounded-full text-xs uppercase tracking-widest hover:border-[var(--accent)] hover:text-[var(--accent)] transition">
+            Submit
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="max-w-[1600px] mx-auto px-6 lg:px-12 pt-16 pb-12 lg:pt-24 lg:pb-16">
+      <div class="flex items-start justify-between gap-8 flex-wrap mb-8">
+        <div class="text-xs uppercase tracking-[0.3em] text-[var(--muted)] flex items-center gap-3">
+          <span class="w-8 h-px bg-[var(--accent)]"></span>
+          <span>Issue 07 — Winter 2024</span>
+        </div>
+        <div class="text-xs uppercase tracking-widest text-[var(--muted)]">
+          <span id="headerCount">15</span> Works Curated
+        </div>
+      </div>
+      <h1 class="hero-title font-display">
+        Frames of<br>
+        <span class="accent-word">silence</span> &amp; motion
+      </h1>
+      <div class="mt-10 grid md:grid-cols-3 gap-8 items-end">
+        <p class="md:col-span-2 text-lg text-[var(--fg-dim)] leading-relaxed max-w-2xl">
+          A curated archive of moments captured between heartbeats — where architecture meets atmosphere, and light folds into memory. Browse, filter, and immerse yourself in frames that refuse to look away.
+        </p>
+        <div class="flex md:justify-end gap-6">
+          <div>
+            <div class="stat-num text-[var(--accent)]">15</div>
+            <div class="text-[0.65rem] uppercase tracking-[0.2em] text-[var(--muted)] mt-1">Photographs</div>
+          </div>
+          <div class="w-px h-14 bg-[var(--border-strong)]"></div>
+          <div>
+            <div class="stat-num">05</div>
+            <div class="text-[0.65rem] uppercase tracking-[0.2em] text-[var(--muted)] mt-1">Categories</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter bar -->
+    <section class="filter-bar">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12 py-6 flex items-center justify-between gap-6 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap" id="filterButtons">
+          <button class="filter-btn active" data-filter="all">All <span class="count">15</span></button>
+          <button class="filter-btn" data-filter="architecture">Architecture <span class="count">3</span></button>
+          <button class="filter-btn" data-filter="nature">Nature <span class="count">3</span></button>
+          <button class="filter-btn" data-filter="portrait">Portrait <span class="count">3</span></button>
+          <button class="filter-btn" data-filter="urban">Urban <span class="count">3</span></button>
+          <button class="filter-btn" data-filter="abstract">Abstract <span class="count">3</span></button>
+        </div>
+        <div class="flex items-center gap-4 text-xs uppercase tracking-widest text-[var(--muted)]">
+          <span class="hidden sm:inline">Sorted by</span>
+          <button id="sortBtn" class="text-[var(--fg)] hover:text-[var(--accent)] transition flex items-center gap-2">
+            <span id="sortLabel">Latest</span>
+            <i class="fas fa-arrow-down text-[0.65rem]"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery -->
+    <main class="max-w-[1600px] mx-auto px-6 lg:px-12 py-12">
+      <div class="gallery" id="gallery"></div>
+
+      <div class="mt-16 pt-8 border-t border-[var(--border)] flex items-center justify-between flex-wrap gap-4">
+        <div class="text-sm text-[var(--muted)]">
+          Showing <span id="visibleCount" class="text-[var(--fg)] font-medium">15</span> of <span class="text-[var(--fg)] font-medium">15</span> works
+        </div>
+        <div class="text-xs uppercase tracking-[0.2em] text-[var(--muted)] flex items-center gap-3">
+          <span class="w-8 h-px bg-[var(--border-strong)]"></span>
+          End of Archive
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[var(--border)] mt-8">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12 py-10 flex items-center justify-between flex-wrap gap-4">
+        <div class="text-sm text-[var(--muted)]">
+          © 2024 Aperture Visual Archive — Curated with care.
+        </div>
+        <div class="flex items-center gap-5 text-[var(--muted)]">
+          <a href="#" class="hover:text-[var(--accent)] transition" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="hover:text-[var(--accent)] transition" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+          <a href="#" class="hover:text-[var(--accent)] transition" aria-label="Behance"><i class="fab fa-behance"></i></a>
+          <a href="#" class="hover:text-[var(--accent)] transition" aria-label="Vimeo"><i class="fab fa-vimeo-v"></i></a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <div class="lightbox-inner">
+      <div class="lightbox-header">
+        <div class="lightbox-counter">
+          <span class="current" id="lbCurrent">01</span>
+          <span class="opacity-40">/</span>
+          <span id="lbTotal">15</span>
+        </div>
+        <button class="lightbox-close" id="lbClose" aria-label="Close lightbox">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="lightbox-stage" id="lbStage">
+        <button class="lightbox-nav lightbox-prev" id="lbPrev" aria-label="Previous image">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="lightbox-image-wrap">
+          <img class="lightbox-image" id="lbImage" src="" alt="">
+        </div>
+        <button class="lightbox-nav lightbox-next" id="lbNext" aria-label="Next image">
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <div class="lightbox-footer">
+        <h2 class="lightbox-title" id="lbTitle"></h2>
+        <div class="lightbox-meta">
+          <span><i class="fas fa-map-marker-alt"></i> <span id="lbLocation"></span></span>
+          <span><i class="fas fa-calendar"></i> <span id="lbYear"></span></span>
+          <span><i class="fas fa-tag"></i> <span id="lbCategory"></span></span>
+        </div>
+      </div>
+      <div class="lightbox-hint">
+        <span><kbd>←</kbd> <kbd>→</kbd> Navigate</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <i class="fas fa-circle-info"></i>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script>
+    // --- Gallery dataset ---
+    const galleryData = [
+      { id: 1,  seed: 'arch-001', category: 'architecture', title: 'Concrete Cathedral',  location: 'Osaka, Japan',          year: '2024', size: 'large' },
+      { id: 2,  seed: 'nat-001',  category: 'nature',       title: 'Alpine Solitude',     location: 'Dolomites, Italy',      year: '2023', size: 'tall'  },
+      { id: 3,  seed: 'port-001', category: 'portrait',     title: 'Quiet Resolve',       location: 'Lisbon, Portugal',      year: '2024', size: ''      },
+      { id: 4,  seed: 'urb-001',  category: 'urban',        title: 'Neon Passage',        location: 'Seoul, South Korea',    year: '2024', size: ''      },
+      { id: 5,  seed: 'abs-001',  category: 'abstract',     title: 'Chromatic Drift',     location: 'Studio Series',         year: '2024', size: 'wide'  },
+      { id: 6,  seed: 'arch-002', category: 'architecture', title: 'Glass Vertebrae',     location: 'Singapore',             year: '2023', size: ''      },
+      { id: 7,  seed: 'nat-002',  category: 'nature',       title: 'Frost Pattern',       location: 'Vík, Iceland',          year: '2024', size: 'tall'  },
+      { id: 8,  seed: 'port-002', category: 'portrait',     title: 'Golden Hour',         location: 'Marrakech, Morocco',    year: '2023', size: ''      },
+      { id: 9,  seed: 'urb-002',  category: 'urban',        title: 'Rainy Crossing',      location: 'Tokyo, Japan',          year: '2024', size: 'wide'  },
+      { id: 10, seed: 'abs-002',  category: 'abstract',     title: 'Liquid Geometry',     location: 'Studio Series',         year: '2024', size: ''      },
+      { id: 11, seed: 'arch-003', category: 'architecture', title: 'Brutal Forms',        location: 'Berlin, Germany',       year: '2023', size: ''      },
+      { id: 12, seed: 'nat-003',  category: 'nature',       title: 'Coastal Mist',        location: 'Big Sur, California',   year: '2024', size: ''      },
+      { id: 13, seed: 'port-003', category: 'portrait',     title: 'The Watcher',         location: 'Paris, France',         year: '2024', size: 'tall'  },
+      { id: 14, seed: 'urb-003',  category: 'urban',        title: 'Midnight Transit',    location: 'New York, USA',         year: '2023', size: ''      },
+      { id: 15, seed: 'abs-003',  category: 'abstract',     title: 'Folded Light',        location: 'Studio Series',         year: '2024', size: 'wide'  },
+    ];
+
+    // --- Element refs ---
+    const gallery       = document.getElementById('gallery');
+    const lightbox      = document.getElementById('lightbox');
+    const lbImage       = document.getElementById('lbImage');
+    const lbTitle       = document.getElementById('lbTitle');
+    const lbLocation    = document.getElementById('lbLocation');
+    const lbYear        = document.getElementById('lbYear');
+    const lbCategory    = document.getElementById('lbCategory');
+    const lbCurrent     = document.getElementById('lbCurrent');
+    const lbTotal       = document.getElementById('lbTotal');
+    const lbPrev        = document.getElementById('lbPrev');
+    const lbNext        = document.getElementById('lbNext');
+    const lbClose       = document.getElementById('lbClose');
+    const lbStage       = document.getElementById('lbStage');
+    const filterButtons = document.getElementById('filterButtons');
+    const visibleCount  = document.getElementById('visibleCount');
+    const sortBtn       = document.getElementById('sortBtn');
+    const sortLabel     = document.getElementById('sortLabel');
+    const toast         = document.getElementById('toast');
+    const toastMsg      = document.getElementById('toastMsg');
+
+    // --- State ---
+    let currentFilter = 'all';
+    let currentSort = 'latest'; // 'latest' | 'oldest'
+    let currentLightboxIndex = 0;
+    let visibleImages = [...galleryData];
+
+    // --- Helpers ---
+    function thumbUrl(item) {
+      // sized based on grid span for crispness without huge downloads
+      if (item.size === 'large') return `https://picsum.photos/seed/${item.seed}/1000/1000.jpg`;
+      if (item.size === 'tall')  return `https://picsum.photos/seed/${item.seed}/700/1000.jpg`;
+      if (item.size === 'wide')  return `https://picsum.photos/seed/${item.seed}/1000/700.jpg`;
+      return `https://picsum.photos/seed/${item.seed}/700/700.jpg`;
+    }
+    function fullUrl(item) {
+      return `https://picsum.photos/seed/${item.seed}/1600/1200.jpg`;
+    }
+
+    function getSortedData() {
+      const data = [...galleryData];
+      if (currentSort === 'latest') {
+        data.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+      } else {
+        data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+      }
+      return data;
+    }
+
+    // --- Render ---
+    function renderGallery() {
+      const data = getSortedData();
+      gallery.innerHTML = '';
+
+      data.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = `gallery-item ${item.size}`;
+        div.dataset.category = item.category;
+        div.dataset.id = item.id;
+        div.style.animationDelay = `${index * 0.04}s`;
+
+        const num = String(index + 1).padStart(2, '0');
+
+        div.innerHTML = `
+          <div class="shimmer"></div>
+          <img src="${thumbUrl(item)}" alt="${item.title}" loading="lazy">
+          <div class="gallery-number">${num}</div>
+          <div class="gallery-expand"><i class="fas fa-expand"></i></div>
+          <div class="gallery-overlay">
+            <span class="gallery-tag">${item.category}</span>
+            <h3 class="gallery-title">${item.title}</h3>
+            <div class="gallery-meta">${item.location} · ${item.year}</div>
+          </div>
+        `;
+
+        const img = div.querySelector('img');
+        const shimmer = div.querySelector('.shimmer');
+        img.addEventListener('load', () => { shimmer.style.display = 'none'; });
+        img.addEventListener('error', () => {
+          shimmer.style.display = 'none';
+          img.style.background = 'var(--card)';
+        });
+
+        div.addEventListener('click', () => openLightbox(item.id));
+        gallery.appendChild(div);
+      });
+    }
+
+    // --- Filter ---
+    function filterGallery(filter) {
+      currentFilter = filter;
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+
+      const items = document.querySelectorAll('.gallery-item');
+      let visible = 0;
+
+      items.forEach(item => {
+        const matches = filter === 'all' || item.dataset.category === filter;
+        if (matches) {
+          item.classList.remove('hidden');
+          requestAnimationFrame(() => item.classList.remove('fade-out'));
+          visible++;
+        } else {
+          item.classList.add('fade-out');
+          setTimeout(() => item.classList.add('hidden'), 400);
+        }
+      });
+
+      // Update visible images array (for lightbox navigation within filter)
+      const filteredData = getSortedData().filter(item =>
+        filter === 'all' || item.category === filter
+      );
+      visibleImages = filteredData;
+
+      visibleCount.textContent = visible;
+
+      const label = filter === 'all' ? 'All works' : filter.charAt(0).toUpperCase() + filter.slice(1);
+      showToast(`${label} — ${visible} ${visible === 1 ? 'work' : 'works'}`);
+    }
+
+    // --- Lightbox ---
+    function openLightbox(id) {
+      const item = visibleImages.find(i => i.id === id);
+      if (!item) return;
+
+      currentLightboxIndex = visibleImages.findIndex(i => i.id === id);
+      if (currentLightboxIndex === -1) {
+        visibleImages = getSortedData();
+        currentLightboxIndex = visibleImages.findIndex(i => i.id === id);
+      }
+
+      updateLightbox(true);
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function updateLightbox(immediate = false) {
+      const item = visibleImages[currentLightboxIndex];
+      if (!item) return;
+
+      lbImage.classList.add('changing');
+
+      const apply = () => {
+        lbImage.src = fullUrl(item);
+        lbImage.alt = item.title;
+        lbTitle.textContent = item.title;
+        lbLocation.textContent = item.location;
+        lbYear.textContent = item.year;
+        lbCategory.textContent = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+        lbCurrent.textContent = String(currentLightboxIndex + 1).padStart(2, '0');
+        lbTotal.textContent = String(visibleImages.length).padStart(2, '0');
+
+        lbImage.onload = () => lbImage.classList.remove('changing');
+      };
+
+      if (immediate) apply();
+      else setTimeout(apply, 200);
+    }
+
+    function nextImage() {
+      currentLightboxIndex = (currentLightboxIndex + 1) % visibleImages.length;
+      updateLightbox();
+    }
+    function prevImage() {
+      currentLightboxIndex = (currentLightboxIndex - 1 + visibleImages.length) % visibleImages.length;
+      updateLightbox();
+    }
+
+    // --- Toast ---
+    let toastTimer;
+    function showToast(message) {
+      toastMsg.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    // --- Events ---
+    filterButtons.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (btn) filterGallery(btn.dataset.filter);
+    });
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbNext.addEventListener('click', nextImage);
+    lbPrev.addEventListener('click', prevImage);
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox || e.target === lbStage) closeLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('active')) return;
+      switch (e.key) {
+        case 'Escape':   closeLightbox(); break;
+        case 'ArrowRight': nextImage(); break;
+        case 'ArrowLeft':  prevImage(); break;
+      }
+    });
+
+    // Sort toggle
+    sortBtn.addEventListener('click', () => {
+      currentSort = currentSort === 'latest' ? 'oldest' : 'latest';
+      sortLabel.textContent = currentSort === 'latest' ? 'Latest' : 'Oldest';
+      renderGallery();
+      // re-apply current filter
+      if (currentFilter !== 'all') filterGallery(currentFilter);
+      else {
+        visibleImages = getSortedData();
+        visibleCount.textContent = visibleImages.length;
+      }
+      showToast(`Sorted by ${currentSort === 'latest' ? 'newest first' : 'oldest first'}`);
+    });
+
+    // Touch swipe support
+    let touchStartX = 0, touchEndX = 0;
+    lbStage.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    lbStage.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const dx = touchEndX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) nextImage(); else prevImage();
+      }
+    }, { passive: true });
+
+    // --- Init ---
+    renderGallery();
+    setTimeout(() => showToast('Welcome to Aperture — click any frame to enter'), 800);
+  </script>
+</body>
+</html>
