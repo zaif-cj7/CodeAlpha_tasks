@@ -1,4 +1,4 @@
-# CodeAlpha Web Development Internship
+# CodeAlpha Internship
 
 This repository contains the projects I completed during my **CodeAlpha Web Development Internship**.
 
